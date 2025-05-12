@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --info-color: #7209b7;
+            --dark-color: #2b2d42;
+            --light-color: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Nunito', 'Segoe UI', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,20 C75,40 50,10 0,30 Z" fill="rgba(255,255,255,0.1)" /></svg>');
+            background-size: cover;
+        }
+
+        .container-fluid {
+            padding: 0 2rem;
+        }
+        
+        .task-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 1.25rem;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            background-color: #fff;
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .priority-high {
+            border-left: 5px solid #f72585;
+        }
+        
+        .priority-medium {
+            border-left: 5px solid #ffc107;
+        }
+        
+        .priority-low {
+            border-left: 5px solid #4cc9f0;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            margin-right: 5px;
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-todo {
+            background-color: #6c757d;
+        }
+        
+        .status-in-progress {
+            background-color: var(--primary-color);
+        }
+        
+        .status-done {
+            background-color: #4cc9f0;
+        }
+        
+        .app-container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        
+        .main-content {
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .filter-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .form-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .form-container h5 {
+            color: var(--dark-color);
+            margin-bottom: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-container h5 i {
+            margin-right: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .task-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        
+        .task-actions button {
+            border-radius: 8px;
+            padding: 0.375rem 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .task-actions button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .sidebar {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.625rem 0.75rem;
+            border-color: #e0e0e0;
+            box-shadow: none;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #3db4d8;
+            border-color: #3db4d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 201, 240, 0.3);
+        }
+        
+        .btn-outline-danger:hover,
+        .btn-outline-primary:hover,
+        .btn-outline-success:hover,
+        .btn-outline-info:hover {
+            transform: translateY(-2px);
+        }
+        
+        .due-date {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        
+        .overdue {
+            color: var(--warning-color);
+            font-weight: 700;
+        }
+        
+        .task-description {
+            white-space: pre-line;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 1rem;
+        }
+        
+        .category-badge {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        .section-title {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .section-title i {
+            color: var(--primary-color);
+        }
+        
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .btn-action-toggle {
+            margin-bottom: 1rem;
+            width: 100%;
+            border: 2px solid var(--primary-color);
+            background-color: #fff;
+            color: var(--primary-color);
+            font-weight: 700;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-action-toggle:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(67, 97, 238, 0.2);
+        }
+        
+        /* Initially hide the forms */
+        #taskFormContainer, 
+        #categoryFormContainer, 
+        #tagFormContainer {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .alert {
+            border-radius: 10px;
+            padding: 1rem;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1.5rem;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid #f0f0f0;
+            padding: 1.5rem;
+        }
+        
+        .empty-tasks {
+            text-align: center;
+            padding: 3rem 0;
+        }
+        
+        .empty-tasks i {
+            font-size: 3rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-tasks p {
+            color: #6c757d;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        /* Counter badges */
+        .badge {
+            padding: 0.35rem 0.65rem;
+            font-weight: 600;
+            border-radius: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header text-center">
+        <div class="container">
+            <h1><i class="fas fa-tasks"></i> Task Manager</h1>
+            <p class="lead">Efficiently organize, track, and complete your tasks</p>
+        </div>
+    </div>
+
+    <div class="container app-container">
+        <div class="row">
+            <!-- Main content -->
+            <div class="col-lg-8 mb-4">
+                <!-- Action buttons for mobile view -->
+                <div class="d-block d-lg-none mb-4">
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <button id="showTaskFormBtn-mobile" class="btn btn-primary w-100">
+                                <i class="fas fa-plus-circle"></i> Task
+                            </button>
+                        </div>
+                        <div class="col-4">
+                            <button id="showCategoryFormBtn-mobile" class="btn btn-success w-100">
+                                <i class="fas fa-folder"></i> Category
+                            </button>
+                        </div>
+                        <div class="col-4">
+                            <button id="showTagFormBtn-mobile" class="btn btn-info w-100 text-white">
+                                <i class="fas fa-tag"></i> Tag
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter section -->
+                <div class="filter-section mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fas fa-filter"></i> Filter Tasks</h5>
+                        <button id="clearFiltersBtn" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="statusFilter" class="form-label small text-muted">Status</label>
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option th:each="status : ${statuses}" th:value="${status}" th:text="${status}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="priorityFilter" class="form-label small text-muted">Priority</label>
+                            <select id="priorityFilter" class="form-select">
+                                <option value="">All Priorities</option>
+                                <option th:each="priority : ${priorities}" th:value="${priority}" th:text="${priority}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="categoryFilter" class="form-label small text-muted">Category</label>
+                            <select id="categoryFilter" class="form-select">
+                                <option value="">All Categories</option>
+                                <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="tagFilter" class="form-label small text-muted">Tag</label>
+                            <select id="tagFilter" class="form-select">
+                                <option value="">All Tags</option>
+                                <option th:each="tag : ${tags}" th:value="${tag.id}" th:text="${tag.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="searchInput" class="form-label small text-muted">Search</label>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search tasks...">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small text-muted">Quick Filter</label>
+                            <button id="showOverdueBtn" class="btn btn-danger w-100">
+                                <i class="fas fa-exclamation-circle"></i> Show Overdue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task list -->
+                <div class="main-content">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="section-title mb-0">
+                            <i class="fas fa-list"></i> Tasks <span id="taskCount" class="badge bg-primary"></span>
+                        </h4>
+                        <button id="showAllTasksBtn" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-sync-alt"></i> Show All
+                        </button>
+                    </div>
+                    <div id="taskContainer">
+                        <!-- Tasks will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <div class="sidebar">
+                    <!-- Action Buttons -->
+                    <div class="row g-3 mb-4 d-none d-lg-flex">
+                        <div class="col-4">
+                            <button id="showTaskFormBtn" class="btn btn-primary w-100">
+                                <i class="fas fa-plus-circle"></i> Task
+                            </button>
+                        </div>
+                        <div class="col-4">
+                            <button id="showCategoryFormBtn" class="btn btn-success w-100">
+                                <i class="fas fa-folder"></i> Category
+                            </button>
+                        </div>
+                        <div class="col-4">
+                            <button id="showTagFormBtn" class="btn btn-info w-100 text-white">
+                                <i class="fas fa-tag"></i> Tag
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Task Form -->
+                    <div id="taskFormContainer" class="form-container">
+                        <h5 id="formTitle"><i class="fas fa-clipboard-list"></i> Add New Task</h5>
+                        <form id="taskForm">
+                            <input type="hidden" id="taskId">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Title</label>
+                                <input type="text" class="form-control" id="title" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" rows="3"></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <select class="form-select" id="priority" required>
+                                        <option th:each="priority : ${priorities}" th:value="${priority}" th:text="${priority}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" required>
+                                        <option th:each="status : ${statuses}" th:value="${status}" th:text="${status}"></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dueDate" class="form-label">Due Date</label>
+                                <input type="datetime-local" class="form-control" id="dueDate">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="category" class="form-label">Category</label>
+                                    <select class="form-select" id="category">
+                                        <option value="">-- Select Category --</option>
+                                        <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="tag" class="form-label">Tag</label>
+                                    <select class="form-select" id="tag">
+                                        <option value="">-- Select Tag --</option>
+                                        <option th:each="tag : ${tags}" th:value="${tag.id}" th:text="${tag.name}"></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" id="closeTaskFormBtn" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                                <button type="button" id="resetFormBtn" class="btn btn-secondary">
+                                    <i class="fas fa-redo"></i> Reset
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Task
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Category Form -->
+                    <div id="categoryFormContainer" class="form-container">
+                        <h5><i class="fas fa-folder"></i> Add Category</h5>
+                        <form id="categoryForm">
+                            <input type="hidden" id="categoryId">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="categoryName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="categoryDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="categoryDescription" rows="2"></textarea>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" id="closeCategoryFormBtn" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> Save Category
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tag Form -->
+                    <div id="tagFormContainer" class="form-container">
+                        <h5><i class="fas fa-tag"></i> Add Tag</h5>
+                        <form id="tagForm">
+                            <input type="hidden" id="tagId">
+                            <div class="mb-3">
+                                <label for="tagName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="tagName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tagColor" class="form-label">Color</label>
+                                <input type="color" class="form-control form-control-color w-100" id="tagColor" value="#3498db">
+                                <div class="mt-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-sm color-preset" data-color="#f72585" style="background-color: #f72585;"></button>
+                                    <button type="button" class="btn btn-sm color-preset" data-color="#4361ee" style="background-color: #4361ee;"></button>
+                                    <button type="button" class="btn btn-sm color-preset" data-color="#4cc9f0" style="background-color: #4cc9f0;"></button>
+                                    <button type="button" class="btn btn-sm color-preset" data-color="#7209b7" style="background-color: #7209b7;"></button>
+                                    <button type="button" class="btn btn-sm color-preset" data-color="#2b2d42" style="background-color: #2b2d42;"></button>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" id="closeTagFormBtn" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                                <button type="submit" class="btn btn-info text-white">
+                                    <i class="fas fa-save"></i> Save Tag
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskModalLabel">Task Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="taskModalBody">
+                    <!-- Task details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    // DOM elements
+    const taskForm = document.getElementById('taskForm');
+    const categoryForm = document.getElementById('categoryForm');
+    const tagForm = document.getElementById('tagForm');
+    const taskContainer = document.getElementById('taskContainer');
+    const formTitle = document.getElementById('formTitle');
+    const resetFormBtn = document.getElementById('resetFormBtn');
+    const taskCount = document.getElementById('taskCount');
+    
+    // Show/hide form buttons
+    const showTaskFormBtn = document.getElementById('showTaskFormBtn');
+    const showCategoryFormBtn = document.getElementById('showCategoryFormBtn');
+    const showTagFormBtn = document.getElementById('showTagFormBtn');
+    const closeTaskFormBtn = document.getElementById('closeTaskFormBtn');
+    const closeCategoryFormBtn = document.getElementById('closeCategoryFormBtn');
+    const closeTagFormBtn = document.getElementById('closeTagFormBtn');
+    
+    // Mobile buttons
+    const showTaskFormBtnMobile = document.getElementById('showTaskFormBtn-mobile');
+    const showCategoryFormBtnMobile = document.getElementById('showCategoryFormBtn-mobile');
+    const showTagFormBtnMobile = document.getElementById('showTagFormBtn-mobile');
+    
+    // Form containers
+    const taskFormContainer = document.getElementById('taskFormContainer');
+    const categoryFormContainer = document.getElementById('categoryFormContainer');
+    const tagFormContainer = document.getElementById('tagFormContainer');
+    
+    // Color presets for tags
+    const colorPresets = document.querySelectorAll('.color-preset');
+    
+    // Filter elements
+    const statusFilter = document.getElementById('statusFilter');
+    const priorityFilter = document.getElementById('priorityFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const tagFilter = document.getElementById('tagFilter');
+    const searchInput = document.getElementById('searchInput');
+    const showOverdueBtn = document.getElementById('showOverdueBtn');
+    const showAllTasksBtn = document.getElementById('showAllTasksBtn');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    
+    // Task modal
+    const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+    const taskModalBody = document.getElementById('taskModalBody');
+    
+    // Task data array
+    let tasks = [];
+    let categories = [];
+    let tags = [];
+    
+    // Load initial data
+    loadTasks();
+    loadCategories();
+    loadTags();
+    
+    // Event listeners for show/hide forms
+    showTaskFormBtn.addEventListener('click', () => {
+        hideAllForms();
+        taskFormContainer.style.display = 'block';
+    });
+    
+    showCategoryFormBtn.addEventListener('click', () => {
+        hideAllForms();
+        categoryFormContainer.style.display = 'block';
+    });
+    
+    showTagFormBtn.addEventListener('click', () => {
+        hideAllForms();
+        tagFormContainer.style.display = 'block';
+    });
+    
+    // Mobile buttons
+    if (showTaskFormBtnMobile) {
+        showTaskFormBtnMobile.addEventListener('click', () => {
+            hideAllForms();
+            taskFormContainer.style.display = 'block';
+            taskFormContainer.scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+    
+    if (showCategoryFormBtnMobile) {
+        showCategoryFormBtnMobile.addEventListener('click', () => {
+            hideAllForms();
+            categoryFormContainer.style.display = 'block';
+            categoryFormContainer.scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+    
+    if (showTagFormBtnMobile) {
+        showTagFormBtnMobile.addEventListener('click', () => {
+            hideAllForms();
+            tagFormContainer.style.display = 'block';
+            tagFormContainer.scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+    
+    // Close form buttons
+    closeTaskFormBtn.addEventListener('click', () => {
+        taskFormContainer.style.display = 'none';
+        resetTaskForm();
+    });
+    
+    closeCategoryFormBtn.addEventListener('click', () => {
+        categoryFormContainer.style.display = 'none';
+        resetCategoryForm();
+    });
+    
+    closeTagFormBtn.addEventListener('click', () => {
+        tagFormContainer.style.display = 'none';
+        resetTagForm();
+    });
+    
+    // Color preset buttons
+    colorPresets.forEach(button => {
+        button.addEventListener('click', () => {
+            const color = button.getAttribute('data-color');
+            document.getElementById('tagColor').value = color;
+        });
+    });
+    
+    // Hide all forms function
+    function hideAllForms() {
+        taskFormContainer.style.display = 'none';
+        categoryFormContainer.style.display = 'none';
+        tagFormContainer.style.display = 'none';
+    }
+    
+    // Event listeners for form submissions
+    taskForm.addEventListener('submit', handleTaskSubmit);
+    categoryForm.addEventListener('submit', handleCategorySubmit);
+    tagForm.addEventListener('submit', handleTagSubmit);
+    resetFormBtn.addEventListener('click', resetTaskForm);
+    
+    // Filter event listeners
+    statusFilter.addEventListener('change', applyFilters);
+    priorityFilter.addEventListener('change', applyFilters);
+    categoryFilter.addEventListener('change', applyFilters);
+    tagFilter.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+    showOverdueBtn.addEventListener('click', showOverdueTasks);
+    showAllTasksBtn.addEventListener('click', resetFilters);
+    clearFiltersBtn.addEventListener('click', resetFilters);
+    
+    // Load tasks from API
+    function loadTasks() {
+        // Mock data for demonstration
+        tasks = [
+            {
+                id: 1,
+                title: "Complete project proposal",
+                description: "Write the project proposal for the client meeting next week. Include project scope, timeline, and cost estimates.",
+                priority: "HIGH",
+                status: "IN_PROGRESS",
+                dueDate: "2025-05-15T14:00",
+                categoryId: 1,
+                tagId: 2,
+                createdAt: "2025-05-05T09:30:00"
+            },
+            {
+                id: 2,
+                title: "Review code changes",
+                description: "Review pull request #25 for the authentication module.",
+                priority: "MEDIUM",
+                status: "TODO",
+                dueDate: "2025-05-12T17:00",
+                categoryId: 2,
+                tagId: 1,
+                createdAt: "2025-05-06T11:20:00"
+            },
+            {
+                id: 3,
+                title: "Update documentation",
+                description: "Update the API documentation with the new endpoints.",
+                priority: "LOW",
+                status: "DONE",
+                dueDate: "2025-05-08T12:00",
+                categoryId: 2,
+                tagId: 3,
+                createdAt: "2025-05-04T15:45:00"
+            },
+            {
+                id: 4,
+                title: "Client meeting",
+                description: "Prepare for the client meeting to discuss project progress.",
+                priority: "HIGH",
+                status: "TODO",
+                dueDate: "2025-05-07T10:00",
+                categoryId: 3,
+                tagId: 4,
+                createdAt: "2025-05-03T16:30:00"
+            }
+        ];
+        
+        renderTasks(tasks);
+        updateTaskCount(tasks.length);
+    }
+    
+    // Load categories from API
+    function loadCategories() {
+        // Mock data for demonstration
+        categories = [
+            { id: 1, name: "Work", description: "Work-related tasks" },
+            { id: 2, name: "Development", description: "Programming and development tasks" },
+            { id: 3, name: "Meetings", description: "Meeting preparations and notes" },
+            { id: 4, name: "Personal", description: "Personal tasks and errands" }
+        ];
+        
+        // Update category filters and dropdowns
+        updateCategoryOptions();
+    }
+    
+    // Load tags from API
+    function loadTags() {
+        // Mock data for demonstration
+        tags = [
+            { id: 1, name: "Frontend", color: "#f72585" },
+            { id: 2, name: "Backend", color: "#4361ee" },
+            { id: 3, name: "Documentation", color: "#4cc9f0" },
+            { id: 4, name: "Meeting", color: "#7209b7" }
+        ];
+        
+        // Update tag filters and dropdowns
+        updateTagOptions();
+    }
+    
+    // Update category options in dropdowns
+    function updateCategoryOptions() {
+        // Clear existing options except the first one
+        const options = Array.from(categoryFilter.options);
+        for (let i = 1; i < options.length; i++) {
+            categoryFilter.remove(1);
+        }
+        
+        const taskCategorySelect = document.getElementById('category');
+        const taskCategoryOptions = Array.from(taskCategorySelect.options);
+        for (let i = 1; i < taskCategoryOptions.length; i++) {
+            taskCategorySelect.remove(1);
+        }
+        
+        // Add categories to the filter dropdown
+        categories.forEach(category => {
+            const filterOption = document.createElement('option');
+            filterOption.value = category.id;
+            filterOption.textContent = category.name;
+            categoryFilter.appendChild(filterOption);
+            
+            const taskOption = document.createElement('option');
+            taskOption.value = category.id;
+            taskOption.textContent = category.name;
+            taskCategorySelect.appendChild(taskOption);
+        });
+    }
+    
+    // Update tag options in dropdowns
+    function updateTagOptions() {
+        // Clear existing options except the first one
+        const options = Array.from(tagFilter.options);
+        for (let i = 1; i < options.length; i++) {
+            tagFilter.remove(1);
+        }
+        
+        const taskTagSelect = document.getElementById('tag');
+        const taskTagOptions = Array.from(taskTagSelect.options);
+        for (let i = 1; i < taskTagOptions.length; i++) {
+            taskTagSelect.remove(1);
+        }
+        
+        // Add tags to the filter dropdown
+        tags.forEach(tag => {
+            const filterOption = document.createElement('option');
+            filterOption.value = tag.id;
+            filterOption.textContent = tag.name;
+            tagFilter.appendChild(filterOption);
+            
+            const taskOption = document.createElement('option');
+            taskOption.value = tag.id;
+            taskOption.textContent = tag.name;
+            taskTagSelect.appendChild(taskOption);
+        });
+    }
+    
+    // Render tasks to the container
+    function renderTasks(tasksToRender) {
+        taskContainer.innerHTML = '';
+        
+        if (tasksToRender.length === 0) {
+            taskContainer.innerHTML = `
+                <div class="empty-tasks">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>No tasks found. Create a new task to get started!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        tasksToRender.forEach(task => {
+            const category = categories.find(cat => cat.id == task.categoryId) || { name: '', description: '' };
+            const tag = tags.find(t => t.id == task.tagId) || { name: '', color: '#ccc' };
+            
+            // Check if task is overdue
+            const isOverdue = task.status !== 'DONE' && task.dueDate && new Date(task.dueDate) < new Date();
+            
+            // Create task card
+            const taskCard = document.createElement('div');
+            taskCard.className = `card task-card priority-${task.priority.toLowerCase()}`;
+            taskCard.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">${task.title}</h5>
+                        <span class="status-badge status-${task.status.toLowerCase().replace('_', '-')}">${task.status.replace('_', ' ')}</span>
+                    </div>
+                    <p class="task-description text-truncate-2">${task.description || 'No description'}</p>
+                    <div class="mb-2">
+                        ${category.name ? `<span class="category-badge"><i class="fas fa-folder"></i> ${category.name}</span>` : ''}
+                        ${tag.name ? `<span class="tag" style="background-color: ${tag.color}"><i class="fas fa-tag"></i> ${tag.name}</span>` : ''}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="due-date ${isOverdue ? 'overdue' : ''}">
+                            ${task.dueDate ? `<i class="far fa-calendar-alt"></i> Due: ${formatDate(task.dueDate)}` : 'No due date'}
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-sm btn-outline-primary view-task" data-task-id="${task.id}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-success edit-task" data-task-id="${task.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-task" data-task-id="${task.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            taskCard.querySelector('.view-task').addEventListener('click', () => viewTask(task.id));
+            taskCard.querySelector('.edit-task').addEventListener('click', () => editTask(task.id));
+            taskCard.querySelector('.delete-task').addEventListener('click', () => deleteTask(task.id));
+            
+            taskContainer.appendChild(taskCard);
+        });
+    }
+    
+    // Format date for display
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', { 
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+    
+    // Handle task form submission
+    function handleTaskSubmit(e) {
+        e.preventDefault();
+        
+        const taskId = document.getElementById('taskId').value;
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const priority = document.getElementById('priority').value;
+        const status = document.getElementById('status').value;
+        const dueDate = document.getElementById('dueDate').value;
+        const categoryId = document.getElementById('category').value;
+        const tagId = document.getElementById('tag').value;
+        
+        if (taskId) {
+            // Update existing task
+            const taskIndex = tasks.findIndex(task => task.id == taskId);
+            if (taskIndex !== -1) {
+                tasks[taskIndex] = {
+                    ...tasks[taskIndex],
+                    title,
+                    description,
+                    priority,
+                    status,
+                    dueDate,
+                    categoryId: categoryId || null,
+                    tagId: tagId || null
+                };
+            }
+        } else {
+            // Create new task
+            const newTask = {
+                id: tasks.length > 0 ? Math.max(...tasks.map(task => task.id)) + 1 : 1,
+                title,
+                description,
+                priority,
+                status,
+                dueDate,
+                categoryId: categoryId || null,
+                tagId: tagId || null,
+                createdAt: new Date().toISOString()
+            };
+            tasks.push(newTask);
+        }
+        
+        resetTaskForm();
+        hideAllForms();
+        renderTasks(tasks);
+        updateTaskCount(tasks.length);
+        
+        // Show success alert
+        showAlert('Task saved successfully!', 'success');
+    }
+    
+    // Handle category form submission
+    function handleCategorySubmit(e) {
+        e.preventDefault();
+        
+        const categoryId = document.getElementById('categoryId').value;
+        const name = document.getElementById('categoryName').value;
+        const description = document.getElementById('categoryDescription').value;
+        
+        if (categoryId) {
+            // Update existing category
+            const categoryIndex = categories.findIndex(cat => cat.id == categoryId);
+            if (categoryIndex !== -1) {
+                categories[categoryIndex] = {
+                    ...categories[categoryIndex],
+                    name,
+                    description
+                };
+            }
+        } else {
+            // Create new category
+            const newCategory = {
+                id: categories.length > 0 ? Math.max(...categories.map(cat => cat.id)) + 1 : 1,
+                name,
+                description
+            };
+            categories.push(newCategory);
+        }
+        
+        resetCategoryForm();
+        hideAllForms();
+        updateCategoryOptions();
+        
+        // Show success alert
+        showAlert('Category saved successfully!', 'success');
+    }
+    
+    // Handle tag form submission
+    function handleTagSubmit(e) {
+        e.preventDefault();
+        
+        const tagId = document.getElementById('tagId').value;
+        const name = document.getElementById('tagName').value;
+        const color = document.getElementById('tagColor').value;
+        
+        if (tagId) {
+            // Update existing tag
+            const tagIndex = tags.findIndex(tag => tag.id == tagId);
+            if (tagIndex !== -1) {
+                tags[tagIndex] = {
+                    ...tags[tagIndex],
+                    name,
+                    color
+                };
+            }
+        } else {
+            // Create new tag
+            const newTag = {
+                id: tags.length > 0 ? Math.max(...tags.map(tag => tag.id)) + 1 : 1,
+                name,
+                color
+            };
+            tags.push(newTag);
+        }
+        
+        resetTagForm();
+        hideAllForms();
+        updateTagOptions();
+        
+        // Show success alert
+        showAlert('Tag saved successfully!', 'success');
+    }
+    
+    // Reset task form
+    function resetTaskForm() {
+        document.getElementById('taskId').value = '';
+        document.getElementById('title').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('priority').value = 'MEDIUM';
+        document.getElementById('status').value = 'TODO';
+        document.getElementById('dueDate').value = '';
+        document.getElementById('category').value = '';
+        document.getElementById('tag').value = '';
+        formTitle.innerHTML = '<i class="fas fa-clipboard-list"></i> Add New Task';
+    }
+    
+    // Reset category form
+    function resetCategoryForm() {
+        document.getElementById('categoryId').value = '';
+        document.getElementById('categoryName').value = '';
+        document.getElementById('categoryDescription').value = '';
+    }
+    
+    // Reset tag form
+    function resetTagForm() {
+        document.getElementById('tagId').value = '';
+        document.getElementById('tagName').value = '';
+        document.getElementById('tagColor').value = '#3498db';
+    }
+    
+    // View task details
+    function viewTask(taskId) {
+        const task = tasks.find(task => task.id == taskId);
+        if (!task) return;
+        
+        const category = categories.find(cat => cat.id == task.categoryId) || { name: '', description: '' };
+        const tag = tags.find(t => t.id == task.tagId) || { name: '', color: '#ccc' };
+        
+        // Prepare the modal body
+        taskModalBody.innerHTML = `
+            <div class="mb-4">
+                <h5 class="fw-bold">${task.title}</h5>
+                <div class="d-flex gap-2 mb-3">
+                    <span class="status-badge status-${task.status.toLowerCase().replace('_', '-')}">${task.status.replace('_', ' ')}</span>
+                    <span class="badge bg-${task.priority === 'HIGH' ? 'danger' : task.priority === 'MEDIUM' ? 'warning' : 'info'}">${task.priority}</span>
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Description</h6>
+                    <p class="task-description">${task.description || 'No description provided.'}</p>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Due Date</h6>
+                        <p>${task.dueDate ? formatDate(task.dueDate) : 'No due date set'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Created On</h6>
+                        <p>${formatDate(task.createdAt)}</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Category</h6>
+                        <p>${category.name ? `<span class="category-badge"><i class="fas fa-folder"></i> ${category.name}</span>` : 'No category assigned'}</p>
+                        ${category.description ? `<small class="text-muted">${category.description}</small>` : ''}
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Tag</h6>
+                        <p>${tag.name ? `<span class="tag" style="background-color: ${tag.color}"><i class="fas fa-tag"></i> ${tag.name}</span>` : 'No tag assigned'}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-outline-primary me-2" id="editTaskModalBtn">
+                    <i class="fas fa-edit"></i> Edit Task
+                </button>
+                <button type="button" class="btn btn-outline-danger" id="deleteTaskModalBtn">
+                    <i class="fas fa-trash"></i> Delete Task
+                </button>
+            </div>
+        `;
+        
+        // Add event listeners to the modal buttons
+        const editTaskModalBtn = taskModalBody.querySelector('#editTaskModalBtn');
+        const deleteTaskModalBtn = taskModalBody.querySelector('#deleteTaskModalBtn');
+        
+        editTaskModalBtn.addEventListener('click', () => {
+            taskModal.hide();
+            editTask(taskId);
+        });
+        
+        deleteTaskModalBtn.addEventListener('click', () => {
+            taskModal.hide();
+            deleteTask(taskId);
+        });
+        
+        // Show the modal
+        taskModal.show();
+    }
+    
+    // Edit task
+    function editTask(taskId) {
+        const task = tasks.find(task => task.id == taskId);
+        if (!task) return;
+        
+        // Populate the form
+        document.getElementById('taskId').value = task.id;
+        document.getElementById('title').value = task.title;
+        document.getElementById('description').value = task.description || '';
+        document.getElementById('priority').value = task.priority;
+        document.getElementById('status').value = task.status;
+        document.getElementById('dueDate').value = task.dueDate || '';
+        document.getElementById('category').value = task.categoryId || '';
+        document.getElementById('tag').value = task.tagId || '';
+        
+        // Update form title
+        formTitle.innerHTML = '<i class="fas fa-edit"></i> Edit Task';
+        
+        // Show the form
+        hideAllForms();
+        taskFormContainer.style.display = 'block';
+        taskFormContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Delete task
+    function deleteTask(taskId) {
+        if (confirm('Are you sure you want to delete this task?')) {
+            tasks = tasks.filter(task => task.id != taskId);
+            renderTasks(tasks);
+            updateTaskCount(tasks.length);
+            showAlert('Task deleted successfully!', 'danger');
+        }
+    }
+    
+    // Apply filters
+    function applyFilters() {
+        const status = statusFilter.value;
+        const priority = priorityFilter.value;
+        const categoryId = categoryFilter.value;
+        const tagId = tagFilter.value;
+        const search = searchInput.value.toLowerCase();
+        
+        // Filter tasks
+        const filteredTasks = tasks.filter(task => {
+            // Status filter
+            if (status && task.status !== status) return false;
+            
+            // Priority filter
+            if (priority && task.priority !== priority) return false;
+            
+            // Category filter
+            if (categoryId && task.categoryId != categoryId) return false;
+            
+            // Tag filter
+            if (tagId && task.tagId != tagId) return false;
+            
+            // Search filter
+            if (search && !task.title.toLowerCase().includes(search) && 
+                (!task.description || !task.description.toLowerCase().includes(search))) {
+                return false;
+            }
+            
+            return true;
+        });
+        
+        renderTasks(filteredTasks);
+        updateTaskCount(filteredTasks.length);
+    }
+    
+    // Show overdue tasks
+    function showOverdueTasks() {
+        const now = new Date();
+        
+        const overdueTasks = tasks.filter(task => {
+            return task.status !== 'DONE' && task.dueDate && new Date(task.dueDate) < now;
+        });
+        
+        renderTasks(overdueTasks);
+        updateTaskCount(overdueTasks.length);
+        showAlert(`Showing ${overdueTasks.length} overdue tasks`, 'warning');
+    }
+    
+    // Reset filters
+    function resetFilters() {
+        statusFilter.value = '';
+        priorityFilter.value = '';
+        categoryFilter.value = '';
+        tagFilter.value = '';
+        searchInput.value = '';
+        
+        renderTasks(tasks);
+        updateTaskCount(tasks.length);
+    }
+    
+    // Update task count
+    function updateTaskCount(count) {
+        taskCount.textContent = count;
+    }
+    
+    // Show alert
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        alertDiv.style.zIndex = '1050';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(alertDiv);
+            }, 300);
+        }, 3000);
+    }
+});
+</script>
+</html>
